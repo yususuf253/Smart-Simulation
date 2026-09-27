@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aplikasi LKPD: Antrean Kasir & Tarif Parkir</title>
+<style>
+:root{--bg:#fff;--fg:#1b2430;--muted:#5b6675;--card:#f4f7fb;--line:#d8e0ea;--acc:#1b365d;--accfg:#fff;--ok:#1a7f4b;--warn:#b45309}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10151c;--fg:#e6ebf2;--muted:#9aa7b8;--card:#1a222c;--line:#2c3746;--acc:#7aa7e0;--accfg:#10151c;--ok:#4cc38a;--warn:#f0a23b}}
+:root[data-theme="dark"]{--bg:#10151c;--fg:#e6ebf2;--muted:#9aa7b8;--card:#1a222c;--line:#2c3746;--acc:#7aa7e0;--accfg:#10151c;--ok:#4cc38a;--warn:#f0a23b}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:.2em 0}
+h2{font-size:1.05rem;margin:0 0 .5em}
+p.sub{color:var(--muted);margin:0 0 12px}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;font:inherit;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+label{display:block;margin-bottom:4px;font-weight:600}
+input{width:100%;padding:10px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.row>div{flex:1;min-width:140px}
+button.act{padding:10px 14px;border:0;border-radius:8px;background:var(--acc);color:var(--accfg);font:inherit;font-weight:600;cursor:pointer}
+button.act:disabled{opacity:.4;cursor:not-allowed}
+.big{font-size:2rem;font-weight:700}
+.muted{color:var(--muted)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}
+.kasir{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.kasir:first-of-type{border-top:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tr.hl td{font-weight:700;color:var(--acc)}
+ol{margin:.3em 0;padding-left:1.3em}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Aplikasi Solusi LKPD Informatika XII</h1>
+<p class="sub">Berpikir Komputasional & Algoritma Pemrograman</p>
+<div class="tabs" role="tablist">
+  <button role="tab" id="t1" aria-selected="true">Antrean Minimarket</button>
+  <button role="tab" id="t2" aria-selected="false">Tarif Parkir</button>
+</div>
+
+<!-- STUDI KASUS 1 -->
+<section id="p1">
+  <div class="card">
+    <h2>1. Ambil nomor antrean</h2>
+    <div class="row">
+      <div><label for="items">Jumlah barang belanjaan</label><input id="items" type="number" min="1" max="99" value="5"></div>
+      <button class="act" id="ambil">Ambil Nomor</button>
+    </div>
+    <p class="ok" id="pesan" style="margin:8px 0 0;font-weight:600"></p>
+    <p class="muted" style="margin:8px 0 0">Kasir 3 adalah jalur cepat (maksimal 5 barang), sesuai pola yang ditemukan pada analisis LKPD.</p>
+  </div>
+  <div class="card">
+    <h2>2. Status kasir</h2>
+    <div id="kasir"></div>
+  </div>
+  <div class="card">
+    <h2>3. Daftar antrean <span class="muted" id="stat"></span></h2>
+    <div id="antre"></div>
+  </div>
+</section>
+
+<!-- STUDI KASUS 2 -->
+<section id="p2" class="hidden">
+  <div class="card">
+    <h2>Kalkulator tarif parkir</h2>
+    <label for="jam">Lama parkir (jam)</label>
+    <input id="jam" type="number" min="1" step="1" value="6">
+    <p class="muted" style="margin:8px 0 0">1 jam pertama Rp 5.000, tiap jam berikutnya Rp 3.000, diskon Rp 2.000 jika lebih dari 5 jam.</p>
+  </div>
+  <div class="card">
+    <div class="muted">Total biaya</div>
+    <div class="big" id="total">-</div>
+    <ol id="langkah"></ol>
+  </div>
+  <div class="card scroll">
+    <h2>Tabel uji coba (tracing)</h2>
+    <table id="tabel"></table>
+  </div>
+</section>
+</main>
+
+<script>
+/* ---------- Tab ---------- */
+const tabs=[["t1","p1"],["t2","p2"]];
+tabs.forEach(([t,p])=>{
+  document.getElementById(t).onclick=()=>{
+    tabs.forEach(([a,b])=>{
+      document.getElementById(a).setAttribute("aria-selected",a===t);
+      document.getElementById(b).classList.toggle("hidden",b!==p);
+    });
+  };
+});
+
+/* ---------- Studi Kasus 2: Tarif parkir ---------- */
+const rp=n=>"Rp "+n.toLocaleString("id-ID");
+// Sama dengan pseudocode di LKPD
+function hitungTarif(jam){
+  let total;
+  if(jam<=1){ total=5000; }
+  else{ total=5000+(jam-1)*3000; }
+  const sebelum=total;
+  let diskon=0;
+  if(jam>5){ diskon=2000; total=total-diskon; }
+  return {sebelum,diskon,total};
+}
+function renderParkir(){
+  const jam=parseInt(document.getElementById("jam").value,10);
+  const ol=document.getElementById("langkah"),tot=document.getElementById("total");
+  if(!(jam>=1)){tot.textContent="-";ol.innerHTML="<li class='warn'>Masukkan lama parkir minimal 1 jam (bilangan bulat).</li>";return;}
+  const r=hitungTarif(jam);
+  tot.textContent=rp(r.total);
+  ol.innerHTML=(jam<=1
+    ?"<li>Parkir 1 jam: Rp 5.000.</li>"
+    :`<li>Biaya: 5.000 + (${jam} - 1) x 3.000 = ${rp(r.sebelum)}.</li>`)
+   +(r.diskon?`<li class="ok">Parkir lebih dari 5 jam, diskon ${rp(r.diskon)}: ${rp(r.sebelum)} - ${rp(r.diskon)} = ${rp(r.total)}.</li>`
+             :"<li>Tidak ada diskon (parkir 5 jam atau kurang).</li>");
+  const rows=[1,2,3,4,5,6,7,8,jam].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+  document.getElementById("tabel").innerHTML=
+    "<tr><th>Jam</th><th>Sebelum diskon</th><th>Diskon</th><th>Total</th></tr>"+
+    rows.map(j=>{const h=hitungTarif(j);return `<tr class="${j===jam?"hl":""}"><td>${j}</td><td>${rp(h.sebelum)}</td><td>${rp(h.diskon)}</td><td>${rp(h.total)}</td></tr>`}).join("");
+}
+document.getElementById("jam").oninput=renderParkir;
+renderParkir();
+
+/* ---------- Studi Kasus 1: Antrean minimarket ---------- */
+let antre=[],nomor=1,selesai=0;
+const kasir=[{nama:"Kasir 1",cur:null},{nama:"Kasir 2",cur:null},{nama:"Kasir 3 (Jalur Cepat)",cur:null,cepat:true}];
+const layan=b=>1+b*0.3; // estimasi menit per pelanggan (abstraksi: hanya jumlah barang yang dipakai)
+
+function setPesan(t){document.getElementById("pesan").textContent=t;}
+function ambil(){
+  const b=parseInt(document.getElementById("items").value,10);
+  if(!(b>=1&&b<=99)){alert("Jumlah barang harus 1 sampai 99.");return;}
+  antre.push({no:nomor,b});
+  setPesan("Nomor antrean Anda: "+nomor);
+  nomor++;
+  renderAntre();
+}
+function panggil(i){
+  const k=kasir[i];
+  if(k.cur)return;
+  const idx=antre.findIndex(c=>!k.cepat||c.b<=5); // langkah 4 algoritma: ambil nomor terdepan yang sesuai
+  if(idx<0)return;
+  k.cur=antre.splice(idx,1)[0];
+  setPesan("Nomor "+k.cur.no+" menuju "+k.nama+".");
+  renderAntre();
+}
+function beres(i){ // kasir selesai: nomor dihapus, kasir kosong lagi
+  if(!kasir[i].cur)return;
+  setPesan("Nomor "+kasir[i].cur.no+" selesai. "+kasir[i].nama+" kosong.");
+  kasir[i].cur=null;selesai++;
+  renderAntre();
+}
+function renderAntre(){
+  document.getElementById("kasir").innerHTML=kasir.map((k,i)=>{
+    const bisa=!k.cur&&antre.some(c=>!k.cepat||c.b<=5);
+    return `<div class="kasir"><div><b>${k.nama}</b><br>${k.cur
+      ?`<span class="warn">Melayani nomor ${k.cur.no} (${k.cur.b} barang)</span>`
+      :`<span class="ok">Kosong</span>`}</div>
+      <div>${k.cur
+        ?`<button class="act" onclick="beres(${i})">Selesai Bayar</button>`
+        :`<button class="act" onclick="panggil(${i})" ${bisa?"":"disabled"}>Panggil Berikutnya</button>`}</div></div>`;
+  }).join("");
+  let acc=0;
+  document.getElementById("antre").innerHTML=antre.length
+    ?"<table><tr><th>No</th><th>Barang</th><th>Estimasi tunggu</th></tr>"+antre.map(c=>{
+        const eta=Math.round(acc/kasir.length);acc+=layan(c.b);
+        return `<tr><td>${c.no}</td><td>${c.b}</td><td>${eta<=0?"segera":"± "+eta+" menit"}</td></tr>`}).join("")+"</table>"
+    :"<span class='muted'>Antrean kosong.</span>";
+  document.getElementById("stat").textContent=`(${antre.length} menunggu, ${selesai} selesai)`;
+}
+document.getElementById("ambil").onclick=ambil;
+renderAntre();
+</script>
+</body>
+</html>
